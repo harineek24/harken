@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { EmpathyEngineApp } from "@/components/empathy-engine-app";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
@@ -18,12 +17,14 @@ export default async function Page() {
 
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get("chat-model");
-    // Pass the model configuration to our Empathy Engine
-  const chatModel = modelIdFromCookie ? modelIdFromCookie.value : DEFAULT_CHAT_MODEL;
+  // Pass the model configuration to our Empathy Engine
+  const chatModel = modelIdFromCookie
+    ? modelIdFromCookie.value
+    : DEFAULT_CHAT_MODEL;
 
   return (
     <>
-      <EmpathyEngineApp 
+      <EmpathyEngineApp
         id={id}
         initialChatModel={chatModel}
         session={session}

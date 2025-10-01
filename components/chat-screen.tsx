@@ -1,33 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import type { UserRole, Mode } from './empathy-engine-app';
-import type { ChatMessage } from '@/lib/types';
-import { generateUUID } from '@/lib/utils';
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChatMessage } from "@/lib/types";
+import { generateUUID } from "@/lib/utils";
+import type { Mode, UserRole } from "./empathy-engine-app";
 
-interface ChatScreenProps {
+type ChatScreenProps = {
   userRole: UserRole;
   selectedMode: Mode | null;
   onBack: () => void;
   id?: string;
   initialChatModel?: string;
   session?: any;
-}
+};
 
-export function ChatScreen({ 
-  userRole, 
-  selectedMode, 
+export function ChatScreen({
+  userRole,
+  selectedMode,
   onBack,
   id,
   initialChatModel,
-  session 
+  session,
 }: ChatScreenProps) {
   const [currentPersona, setCurrentPersona] = useState<string | null>(null);
-  const [fromRole, setFromRole] = useState<string>(userRole || 'pm');
-  const [toRole, setToRole] = useState<string>('engineering');
+  const [fromRole, setFromRole] = useState<string>(userRole || "pm");
+  const [toRole, setToRole] = useState<string>("engineering");
 
   // Keep refs for values that might change but need to be captured in transport
-  const currentModelRef = useRef(initialChatModel || 'chat-model');
+  const currentModelRef = useRef(initialChatModel || "chat-model");
   const modeRef = useRef(selectedMode?.id);
   const userRoleRef = useRef(userRole);
   const personaRef = useRef(currentPersona);
@@ -42,18 +43,25 @@ export function ChatScreen({
     toRoleRef.current = toRole;
   }, [selectedMode?.id, userRole, currentPersona, fromRole, toRole]);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, sendMessage } = useChat<ChatMessage>({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    sendMessage,
+  } = useChat<ChatMessage>({
     id,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: "/api/chat",
       prepareSendMessagesRequest(request: any) {
         return {
           body: {
             id: request.id,
             message: request.messages.at(-1),
             selectedChatModel: currentModelRef.current,
-            selectedVisibilityType: 'private',
+            selectedVisibilityType: "private",
             mode: modeRef.current,
             userRole: userRoleRef.current,
             persona: personaRef.current,
@@ -68,12 +76,14 @@ export function ChatScreen({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim()) {
+      return;
+    }
     handleSubmit(e);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleFormSubmit(e as any);
     }
@@ -81,35 +91,37 @@ export function ChatScreen({
 
   // Mode-specific interfaces
   const PerspectiveCheckInterface = () => (
-    <div className="flex-1 flex flex-col">
-      <div className="p-4 bg-blue-50 border-b">
-        <p className="text-sm text-blue-800">
-          <strong>How it works:</strong> Describe your idea, then choose which team perspective you want to hear from
+    <div className="flex flex-1 flex-col">
+      <div className="border-b bg-blue-50 p-4">
+        <p className="text-blue-800 text-sm">
+          <strong>How it works:</strong> Describe your idea, then choose which
+          team perspective you want to hear from
         </p>
       </div>
-      
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((message: any) => {
-          const textContent = message.parts
-            ?.filter((part: any) => part.type === 'text')
-            .map((part: any) => part.text)
-            .join('') || '';
-          
+          const textContent =
+            message.parts
+              ?.filter((part: any) => part.type === "text")
+              .map((part: any) => part.text)
+              .join("") || "";
+
           return (
             <div
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white shadow-sm border'
+                className={`max-w-xs rounded-2xl px-4 py-3 lg:max-w-md ${
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "border bg-white shadow-sm"
                 }`}
               >
-                {message.role === 'assistant' && currentPersona && (
-                  <div className="text-sm font-medium text-gray-600 mb-2">
+                {message.role === "assistant" && currentPersona && (
+                  <div className="mb-2 font-medium text-gray-600 text-sm">
                     {currentPersona} perspective:
                   </div>
                 )}
@@ -122,21 +134,23 @@ export function ChatScreen({
 
       {/* Team selector */}
       {messages.length === 0 || !currentPersona ? (
-        <div className="p-4 bg-gray-50 border-t">
-          <p className="text-sm font-medium text-gray-700 mb-3">Get perspective from:</p>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="border-t bg-gray-50 p-4">
+          <p className="mb-3 font-medium text-gray-700 text-sm">
+            Get perspective from:
+          </p>
+          <div className="mb-4 grid grid-cols-2 gap-3">
             {[
-              { id: 'engineering', name: 'Engineering', icon: '⚙️' },
-              { id: 'design', name: 'Design', icon: '🎨' },
-              { id: 'sales', name: 'Sales', icon: '💼' },
-              { id: 'support', name: 'Support', icon: '🎧' }
+              { id: "engineering", name: "Engineering", icon: "⚙️" },
+              { id: "design", name: "Design", icon: "🎨" },
+              { id: "sales", name: "Sales", icon: "💼" },
+              { id: "support", name: "Support", icon: "🎧" },
             ].map((team) => (
-              <button 
+              <button
+                className="rounded-lg border border-gray-300 p-3 text-center transition-all hover:border-blue-400 hover:shadow-sm"
                 key={team.id}
                 onClick={() => setCurrentPersona(team.id)}
-                className="p-3 border border-gray-300 rounded-lg hover:border-blue-400 hover:shadow-sm transition-all text-center"
               >
-                <div className="text-xl mb-1">{team.icon}</div>
+                <div className="mb-1 text-xl">{team.icon}</div>
                 <div className="font-medium text-gray-900">{team.name}</div>
               </button>
             ))}
@@ -145,32 +159,32 @@ export function ChatScreen({
       ) : null}
 
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className="border-t p-4">
         <div className="flex space-x-3">
           <input
-            value={input}
+            className="flex-1 rounded-full border border-gray-300 p-3 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={
-              currentPersona 
+              currentPersona
                 ? `Ask from ${currentPersona} perspective...`
                 : "Describe your idea... (e.g., 'We want to add real-time collaboration')"
             }
-            className="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={input}
           />
           <button
-            onClick={handleFormSubmit}
+            className="rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            onClick={handleFormSubmit}
           >
             Send
           </button>
         </div>
-        
+
         {currentPersona && (
           <button
+            className="mt-2 text-gray-500 text-sm hover:text-gray-700"
             onClick={() => setCurrentPersona(null)}
-            className="mt-2 text-sm text-gray-500 hover:text-gray-700"
           >
             ← Choose different perspective
           </button>
@@ -180,27 +194,35 @@ export function ChatScreen({
   );
 
   const TranslationInterface = () => (
-    <div className="flex-1 flex flex-col p-4">
-      <div className="max-w-2xl mx-auto w-full">
+    <div className="flex flex-1 flex-col p-4">
+      <div className="mx-auto w-full max-w-2xl">
         {messages.length === 0 ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your message:</label>
+              <label className="mb-2 block font-medium text-gray-700 text-sm">
+                Your message:
+              </label>
               <textarea
-                value={input}
-                onChange={(e: any) => handleInputChange({ target: { value: e.target.value } } as any)}
+                className="h-24 w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500"
+                onChange={(e: any) =>
+                  handleInputChange({
+                    target: { value: e.target.value },
+                  } as any)
+                }
                 placeholder="What do you want to say? (e.g., 'We need to ship this feature faster')"
-                className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                value={input}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">From (your role):</label>
-                <select 
-                  value={fromRole}
+                <label className="mb-2 block font-medium text-gray-700 text-sm">
+                  From (your role):
+                </label>
+                <select
+                  className="w-full rounded-lg border border-gray-300 p-3"
                   onChange={(e: any) => setFromRole(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
+                  value={fromRole}
                 >
                   <option value="pm">Product Manager</option>
                   <option value="engineering">Engineering</option>
@@ -209,13 +231,15 @@ export function ChatScreen({
                   <option value="support">Support</option>
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">To (target audience):</label>
-                <select 
-                  value={toRole}
+                <label className="mb-2 block font-medium text-gray-700 text-sm">
+                  To (target audience):
+                </label>
+                <select
+                  className="w-full rounded-lg border border-gray-300 p-3"
                   onChange={(e: any) => setToRole(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
+                  value={toRole}
                 >
                   <option value="engineering">Engineering</option>
                   <option value="pm">Product Manager</option>
@@ -225,47 +249,47 @@ export function ChatScreen({
                 </select>
               </div>
             </div>
-            
-            <button 
-              onClick={handleFormSubmit}
+
+            <button
+              className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               disabled={!input.trim() || isLoading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              onClick={handleFormSubmit}
             >
-              {isLoading ? 'Translating...' : 'Translate Message'}
+              {isLoading ? "Translating..." : "Translate Message"}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Show messages */}
             {messages.map((message: any) => {
-              const textContent = message.parts
-                ?.filter((part: any) => part.type === 'text')
-                .map((part: any) => part.text)
-                .join('') || '';
-              
+              const textContent =
+                message.parts
+                  ?.filter((part: any) => part.type === "text")
+                  .map((part: any) => part.text)
+                  .join("") || "";
+
               return (
                 <div
-                  key={message.id}
-                  className={`p-4 rounded-lg ${
-                    message.role === 'user' 
-                      ? 'bg-blue-50 border-l-4 border-blue-400' 
-                      : 'bg-green-50 border-l-4 border-green-400'
+                  className={`rounded-lg p-4 ${
+                    message.role === "user"
+                      ? "border-blue-400 border-l-4 bg-blue-50"
+                      : "border-green-400 border-l-4 bg-green-50"
                   }`}
+                  key={message.id}
                 >
-                  <div className="text-sm font-medium text-gray-600 mb-2">
-                    {message.role === 'user' 
+                  <div className="mb-2 font-medium text-gray-600 text-sm">
+                    {message.role === "user"
                       ? `Original (${fromRole}):`
-                      : `Translated for ${toRole}:`
-                    }
+                      : `Translated for ${toRole}:`}
                   </div>
                   <div className="whitespace-pre-wrap">{textContent}</div>
                 </div>
               );
             })}
-            
+
             <button
+              className="w-full rounded-lg bg-gray-600 py-2 font-medium text-white transition-colors hover:bg-gray-700"
               onClick={() => window.location.reload()}
-              className="w-full bg-gray-600 text-white py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
             >
               Translate Another Message
             </button>
@@ -276,25 +300,26 @@ export function ChatScreen({
   );
 
   const DefaultInterface = () => (
-    <div className="flex-1 flex flex-col">
+    <div className="flex flex-1 flex-col">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((message: any) => {
-          const textContent = message.parts
-            ?.filter((part: any) => part.type === 'text')
-            .map((part: any) => part.text)
-            .join('') || '';
-          
+          const textContent =
+            message.parts
+              ?.filter((part: any) => part.type === "text")
+              .map((part: any) => part.text)
+              .join("") || "";
+
           return (
             <div
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white shadow-sm border'
+                className={`max-w-xs rounded-2xl px-4 py-3 lg:max-w-md ${
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "border bg-white shadow-sm"
                 }`}
               >
                 <div className="whitespace-pre-wrap">{textContent}</div>
@@ -302,17 +327,23 @@ export function ChatScreen({
             </div>
           );
         })}
-        
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border">
+            <div className="rounded-2xl border bg-white px-4 py-3 shadow-sm">
               <div className="flex items-center space-x-2">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
+                  <div
+                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    style={{ animationDelay: "0.1s" }}
+                  />
+                  <div
+                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    style={{ animationDelay: "0.2s" }}
+                  />
                 </div>
-                <span className="text-sm text-gray-600">Thinking...</span>
+                <span className="text-gray-600 text-sm">Thinking...</span>
               </div>
             </div>
           </div>
@@ -320,19 +351,19 @@ export function ChatScreen({
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className="border-t p-4">
         <div className="flex space-x-3">
           <input
-            value={input}
+            className="flex-1 rounded-full border border-gray-300 p-3 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={`Try: ${selectedMode?.example || 'Ask me anything...'}`}
-            className="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={`Try: ${selectedMode?.example || "Ask me anything..."}`}
+            value={input}
           />
           <button
-            onClick={handleFormSubmit}
+            className="rounded-full bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            onClick={handleFormSubmit}
           >
             Send
           </button>
@@ -342,36 +373,38 @@ export function ChatScreen({
   );
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="flex h-screen flex-col bg-white">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
-        <button 
+      <div className="flex items-center justify-between bg-blue-600 p-4 text-white">
+        <button
+          className="flex items-center space-x-2 text-blue-100 hover:text-white"
           onClick={onBack}
-          className="text-blue-100 hover:text-white flex items-center space-x-2"
         >
           <span>←</span>
           <span>Back</span>
         </button>
         <div className="text-center">
           <h3 className="font-medium">{selectedMode?.title}</h3>
-          <p className="text-sm text-blue-100">{selectedMode?.description}</p>
+          <p className="text-blue-100 text-sm">{selectedMode?.description}</p>
         </div>
         <div className="text-blue-100">{selectedMode?.icon}</div>
       </div>
 
       {/* Mode-specific interface */}
-      {selectedMode?.id === 'perspective-check' && <PerspectiveCheckInterface />}
-      {selectedMode?.id === 'translation' && <TranslationInterface />}
-      {(selectedMode?.id === 'conversation-practice' || 
-        selectedMode?.id === 'multi-perspective' || 
-        selectedMode?.id === 'tech-to-business' ||
-        selectedMode?.id === 'pm-perspective' ||
-        selectedMode?.id === 'stakeholder-communication' ||
-        selectedMode?.id === 'design-advocacy' ||
-        selectedMode?.id === 'pm-alignment' ||
-        selectedMode?.id === 'eng-collaboration' ||
-        selectedMode?.id === 'general-translation' ||
-        selectedMode?.id === 'team-dynamics') && <DefaultInterface />}
+      {selectedMode?.id === "perspective-check" && (
+        <PerspectiveCheckInterface />
+      )}
+      {selectedMode?.id === "translation" && <TranslationInterface />}
+      {(selectedMode?.id === "conversation-practice" ||
+        selectedMode?.id === "multi-perspective" ||
+        selectedMode?.id === "tech-to-business" ||
+        selectedMode?.id === "pm-perspective" ||
+        selectedMode?.id === "stakeholder-communication" ||
+        selectedMode?.id === "design-advocacy" ||
+        selectedMode?.id === "pm-alignment" ||
+        selectedMode?.id === "eng-collaboration" ||
+        selectedMode?.id === "general-translation" ||
+        selectedMode?.id === "team-dynamics") && <DefaultInterface />}
     </div>
   );
 }

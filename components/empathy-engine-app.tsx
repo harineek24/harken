@@ -1,38 +1,42 @@
-import React, { useState } from 'react';
-import { WelcomeScreen } from './welcome-screen';
-import { ModeScreen } from './mode-screen';
-import { ChatScreen } from './chat-screen';
+import { useState } from "react";
+import { ChatScreen } from "./chat-screen";
+import { ModeScreen } from "./mode-screen";
+import { WelcomeScreen } from "./welcome-screen";
 
-export type UserRole = 'pm' | 'engineer' | 'designer' | 'other' | null;
-export type AppScreen = 'welcome' | 'modes' | 'chat';
+export type UserRole = "pm" | "engineer" | "designer" | "other" | null;
+export type AppScreen = "welcome" | "modes" | "chat";
 
-export interface Mode {
+export type Mode = {
   id: string;
   icon: string;
   title: string;
   description: string;
   example: string;
-}
+};
 
-interface EmpathyEngineAppProps {
+type EmpathyEngineAppProps = {
   id?: string;
   initialChatModel?: string;
   session?: any; // Session from auth
-}
+};
 
-export function EmpathyEngineApp({ id, initialChatModel, session }: EmpathyEngineAppProps) {
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>('welcome');
+export function EmpathyEngineApp({
+  id,
+  initialChatModel,
+  session,
+}: EmpathyEngineAppProps) {
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [selectedMode, setSelectedMode] = useState<Mode | null>(null);
 
   const handleRoleSelect = (role: UserRole) => {
     setUserRole(role);
-    setCurrentScreen('modes');
+    setCurrentScreen("modes");
   };
 
   const handleModeSelect = (mode: Mode) => {
     setSelectedMode(mode);
-    setCurrentScreen('chat');
+    setCurrentScreen("chat");
   };
 
   const handleBack = (screen: AppScreen) => {
@@ -41,24 +45,24 @@ export function EmpathyEngineApp({ id, initialChatModel, session }: EmpathyEngin
 
   return (
     <>
-      {currentScreen === 'welcome' && (
+      {currentScreen === "welcome" && (
         <WelcomeScreen onRoleSelect={handleRoleSelect} />
       )}
-      {currentScreen === 'modes' && (
-        <ModeScreen 
-          userRole={userRole}
+      {currentScreen === "modes" && (
+        <ModeScreen
+          onBack={() => handleBack("welcome")}
           onModeSelect={handleModeSelect}
-          onBack={() => handleBack('welcome')}
+          userRole={userRole}
         />
       )}
-      {currentScreen === 'chat' && (
-        <ChatScreen 
+      {currentScreen === "chat" && (
+        <ChatScreen
           id={id}
-          userRole={userRole}
-          selectedMode={selectedMode}
           initialChatModel={initialChatModel}
+          onBack={() => handleBack("modes")}
+          selectedMode={selectedMode}
           session={session}
-          onBack={() => handleBack('modes')}
+          userRole={userRole}
         />
       )}
     </>
