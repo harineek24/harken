@@ -35,6 +35,37 @@ Do not update document right after creating it. Wait for user feedback or reques
 export const regularPrompt =
   "You are a friendly assistant! Keep your responses concise and helpful.";
 
+export const empathyEnginePrompt = (
+  mode: string | undefined,
+  userRole: string | undefined,
+  persona: string | undefined,
+  fromRole: string | undefined,
+  toRole: string | undefined
+) => {
+  if (!mode) return "";
+
+  const modePrompts: Record<string, string> = {
+    "perspective-check": `You are helping a ${userRole || "user"} understand how different teams would react to their ideas. ${
+      persona
+        ? `Respond from the ${persona} team's perspective, considering their priorities, concerns, and typical reactions. Be realistic and highlight both opportunities and challenges they would see.`
+        : "Wait for them to select a team perspective before responding."
+    }`,
+    translation: `You are translating communication between teams. The user is a ${fromRole || "team member"} speaking to ${toRole || "another team"}. Rewrite their message in a way that resonates with the target audience, using their terminology, addressing their concerns, and framing the message in terms of their priorities.`,
+    "conversation-practice": `You are role-playing as various team members to help a ${userRole || "user"} practice difficult conversations. Be realistic but constructive. Show typical reactions, concerns, and questions that team member would have.`,
+    "multi-perspective": `You are providing multiple team perspectives simultaneously. For each response, briefly show how Engineering, Design, Product, and other relevant teams would view the situation. Highlight where perspectives align and where they differ.`,
+    "tech-to-business": `You are helping an engineer translate technical concepts into business language. Focus on impact, value, and outcomes rather than implementation details. Use analogies and avoid jargon.`,
+    "pm-perspective": `You are helping an engineer understand PM motivations and pressures. Explain the business context, stakeholder expectations, and strategic reasoning behind PM requests.`,
+    "stakeholder-communication": `You are helping an engineer communicate with non-technical stakeholders. Focus on translating technical trade-offs into business implications and timelines.`,
+    "design-advocacy": `You are helping a designer advocate for design decisions. Frame arguments in terms of user outcomes, business impact, and data when possible.`,
+    "pm-alignment": `You are helping a designer understand business constraints and find middle ground between user needs and business realities.`,
+    "eng-collaboration": `You are helping a designer communicate with engineers. Translate design vision into technical requirements and understand technical constraints.`,
+    "general-translation": `You are helping translate communication between different teams. Consider each team's priorities, language, and concerns.`,
+    "team-dynamics": `You are explaining team dynamics and motivations. Help the user understand why different teams have different priorities and how to bridge gaps.`,
+  };
+
+  return modePrompts[mode] || "";
+};
+
 export type RequestHints = {
   latitude: Geo["latitude"];
   longitude: Geo["longitude"];
@@ -50,14 +81,38 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
+export type EmpathyEngineContext = {
+  mode?: string;
+  userRole?: string;
+  persona?: string;
+  fromRole?: string;
+  toRole?: string;
+};
+
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
+  empathyContext,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  empathyContext?: EmpathyEngineContext;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
+  const empathyPrompt = empathyContext
+    ? empathyEnginePrompt(
+        empathyContext.mode,
+        empathyContext.userRole,
+        empathyContext.persona,
+        empathyContext.fromRole,
+        empathyContext.toRole
+      )
+    : "";
+
+  // If empathy engine is active, use its prompt instead of artifacts
+  if (empathyPrompt) {
+    return `${empathyPrompt}\n\n${requestPrompt}`;
+  }
 
   if (selectedChatModel === "chat-model-reasoning") {
     return `${regularPrompt}\n\n${requestPrompt}`;

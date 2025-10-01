@@ -100,11 +100,21 @@ export async function POST(request: Request) {
       message,
       selectedChatModel,
       selectedVisibilityType,
+      mode,
+      userRole,
+      persona,
+      fromRole,
+      toRole,
     }: {
       id: string;
       message: ChatMessage;
       selectedChatModel: ChatModel["id"];
       selectedVisibilityType: VisibilityType;
+      mode?: string;
+      userRole?: string;
+      persona?: string;
+      fromRole?: string;
+      toRole?: string;
     } = requestBody;
 
     const session = await auth();
@@ -174,10 +184,17 @@ export async function POST(request: Request) {
     let finalMergedUsage: AppUsage | undefined;
 
     const stream = createUIMessageStream({
-      execute: ({ writer: dataStream }) => {
+      execute: ({ writer: dataStream }: { writer: any }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            empathyContext:
+              mode || userRole || persona || fromRole || toRole
+                ? { mode, userRole, persona, fromRole, toRole }
+                : undefined,
+          }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -203,7 +220,7 @@ export async function POST(request: Request) {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",
           },
-          onFinish: async ({ usage }) => {
+          onFinish: async ({ usage }: { usage: any }) => {
             try {
               const providers = await getTokenlensCatalog();
               const modelId =
@@ -246,9 +263,9 @@ export async function POST(request: Request) {
         );
       },
       generateId: generateUUID,
-      onFinish: async ({ messages }) => {
+      onFinish: async ({ messages }: { messages: any }) => {
         await saveMessages({
-          messages: messages.map((currentMessage) => ({
+          messages: messages.map((currentMessage: any) => ({
             id: currentMessage.id,
             role: currentMessage.role,
             parts: currentMessage.parts,
