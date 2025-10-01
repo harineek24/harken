@@ -35,16 +35,18 @@ Do not update document right after creating it. Wait for user feedback or reques
 export const regularPrompt =
   "You are a friendly assistant! Keep your responses concise and helpful.";
 
-export const empathyEnginePrompt = (
-  mode: string | undefined,
-  userRole: string | undefined,
-  persona: string | undefined,
-  fromRole: string | undefined,
-  toRole: string | undefined
-) => {
-  if (!mode) {
+export const empathyEnginePrompt = (context: {
+  mode?: string;
+  userRole?: string;
+  persona?: string;
+  fromRole?: string;
+  toRole?: string;
+}) => {
+  if (!context.mode) {
     return "";
   }
+
+  const { mode, userRole, persona, fromRole, toRole } = context;
 
   const modePrompts: Record<string, string> = {
     "perspective-check": `You are helping a ${userRole || "user"} understand how different teams would react to their ideas. ${
@@ -110,13 +112,7 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const empathyPrompt = empathyContext
-    ? empathyEnginePrompt(
-        empathyContext.mode,
-        empathyContext.userRole,
-        empathyContext.persona,
-        empathyContext.fromRole,
-        empathyContext.toRole
-      )
+    ? empathyEnginePrompt(empathyContext)
     : "";
 
   // If empathy engine is active, use its prompt instead of artifacts

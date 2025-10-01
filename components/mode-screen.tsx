@@ -137,6 +137,7 @@ export function ModeScreen({
           <button
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
             onClick={onBack}
+            type="button"
           >
             <span>←</span>
             <span>Back</span>
@@ -158,6 +159,7 @@ export function ModeScreen({
               className="w-full rounded-xl border border-gray-200 bg-white p-6 text-left transition-all hover:border-blue-300 hover:shadow-md"
               key={mode.id}
               onClick={() => onModeSelect(mode)}
+              type="button"
             >
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 text-3xl">{mode.icon}</div>

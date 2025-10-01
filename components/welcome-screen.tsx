@@ -55,6 +55,7 @@ export function WelcomeScreen({ onRoleSelect }: WelcomeScreenProps) {
                 className="w-full rounded-lg border border-gray-200 p-4 text-left transition-all hover:border-blue-300 hover:shadow-sm"
                 key={role.id}
                 onClick={() => onRoleSelect(role.id)}
+                type="button"
               >
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">{role.icon}</span>
