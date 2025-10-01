@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type React from "react";
 import { useMemo, useState } from "react";
-import { generateUUID } from "@/lib/utils";
+import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import type { Mode, UserRole } from "./empathy-engine-app";
 
 type ChatScreenProps = {
@@ -335,6 +335,7 @@ export function ChatScreen({
     generateId: generateUUID,
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
         return {
           body: {
@@ -352,6 +353,9 @@ export function ChatScreen({
         };
       },
     }),
+    onError: (error) => {
+      alert(`Chat Error: ${error.message || "Failed to send message. Please try again."}`);
+    },
   });
 
   const isLoading = status === "submitted";
