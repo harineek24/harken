@@ -1,26 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { WelcomeScreen } from './welcome-screen';
-import { ModeScreen } from './mode-screen';
 import { ChatScreen } from './chat-screen';
+import { ModeScreen } from './mode-screen';
+import { WelcomeScreen } from './welcome-screen';
 
 export type UserRole = 'pm' | 'engineer' | 'designer' | 'other' | null;
 export type AppScreen = 'welcome' | 'modes' | 'chat';
 
-export interface Mode {
+export type Mode = {
   id: string;
   icon: string;
   title: string;
   description: string;
   example: string;
-}
+};
 
-interface EmpathyEngineAppProps {
+type EmpathyEngineAppProps = {
   id?: string;
   initialChatModel?: string;
   session?: any;
-}
+};
 
 export function EmpathyEngineApp({ id, initialChatModel, session }: EmpathyEngineAppProps) {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('welcome');
@@ -48,19 +48,19 @@ export function EmpathyEngineApp({ id, initialChatModel, session }: EmpathyEngin
       )}
       {currentScreen === 'modes' && (
         <ModeScreen 
-          userRole={userRole}
-          onModeSelect={handleModeSelect}
           onBack={() => handleBack('welcome')}
+          onModeSelect={handleModeSelect}
+          userRole={userRole}
         />
       )}
       {currentScreen === 'chat' && (
         <ChatScreen 
           id={id}
-          userRole={userRole}
-          selectedMode={selectedMode}
           initialChatModel={initialChatModel}
-          session={session}
           onBack={() => handleBack('modes')}
+          selectedMode={selectedMode}
+          session={session}
+          userRole={userRole}
         />
       )}
     </>
