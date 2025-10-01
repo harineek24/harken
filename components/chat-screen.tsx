@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { generateUUID } from "@/lib/utils";
 import type { Mode, UserRole } from "./empathy-engine-app";
 
 type ChatScreenProps = {
@@ -319,16 +320,19 @@ export function ChatScreen({
   userRole,
   selectedMode,
   onBack,
-  id,
+  id: providedId,
   initialChatModel,
 }: ChatScreenProps) {
+  const chatId = useMemo(() => providedId || generateUUID(), [providedId]);
+  
   const [currentPersona, setCurrentPersona] = useState<string | null>(null);
   const [fromRole, setFromRole] = useState<string>(userRole || "pm");
   const [toRole, setToRole] = useState<string>("engineering");
   const [input, setInput] = useState("");
 
   const { messages, sendMessage, status } = useChat({
-    id,
+    id: chatId,
+    generateId: generateUUID,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(request) {
