@@ -334,13 +334,16 @@ export function ChatScreen({
       prepareSendMessagesRequest(request) {
         return {
           body: {
-            ...request.body,
+            id: request.id,
+            message: request.messages.at(-1),
+            selectedChatModel: initialChatModel || "chat-model",
+            selectedVisibilityType: "private",
             mode: selectedMode?.id,
             userRole,
             persona: currentPersona,
             fromRole,
             toRole,
-            model: initialChatModel,
+            ...request.body,
           },
         };
       },
