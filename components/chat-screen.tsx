@@ -1,8 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import type React from "react";
 import { useMemo, useState } from "react";
-import { generateUUID } from "@/lib/utils";
+import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import type { Mode, UserRole } from "./empathy-engine-app";
 
 type ChatScreenProps = {
@@ -147,7 +149,7 @@ const TranslationInterface = ({
             <textarea
               className="h-24 w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500"
               id="message-input"
-              onChange={(e) => handleInputChange({ target: { value: e.target.value } } as any)}
+              onChange={handleInputChange}
               placeholder="What do you want to say? (e.g., 'We need to ship this feature faster')"
               value={input}
             />
@@ -329,22 +331,46 @@ export function ChatScreen({
   const [input, setInput] = useState("");
 
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
     id: chatId,
-    body: {
-      selectedChatModel: initialChatModel || "chat-model",
-      selectedVisibilityType: 'private',
-      mode: selectedMode?.id,
-      userRole,
-      persona: currentPersona,
-      fromRole,
-      toRole,
-    }
+    generateId: generateUUID,
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      fetch: fetchWithErrorHandlers,
+      prepareSendMessagesRequest(request) {
+        const lastMessage = request.messages.at(-1);
+        const requestBody = {
+          id: request.id,
+          message: lastMessage,
+          selectedChatModel: initialChatModel || "chat-model",
+          selectedVisibilityType: "private",
+          mode: selectedMode?.id,
+          userRole,
+          persona: currentPersona,
+          fromRole,
+          toRole,
+          ...request.body,
+        };
+        
+        // Temporary debug - will remove
+        if (typeof window !== "undefined") {
+          (window as any).__lastChatRequest = requestBody;
+        }
+        
+        return {
+          body: requestBody,
+        };
+      },
+    }),
+    onError: (error) => {
+      alert(`Chat Error: ${error.message || "Failed to send message. Please try again."}`);
+    },
   });
 
-  const isLoading = status === 'submitted';
+  const isLoading = status === "submitted";
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setInput(e.target.value);
   };
 
@@ -355,7 +381,7 @@ export function ChatScreen({
     }
     sendMessage({
       role: "user" as const,
-      content: input,
+      parts: [{ type: "text", text: input }],
     });
     setInput("");
   };
