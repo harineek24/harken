@@ -326,8 +326,9 @@ export function ChatScreen({
   const [currentPersona, setCurrentPersona] = useState<string | null>(null);
   const [fromRole, setFromRole] = useState<string>(userRole || "pm");
   const [toRole, setToRole] = useState<string>("engineering");
+  const [input, setInput] = useState("");
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, sendMessage, status } = useChat({
     api: '/api/chat',
     id: chatId,
     body: {
@@ -341,12 +342,22 @@ export function ChatScreen({
     }
   });
 
+  const isLoading = status === 'submitted';
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) {
       return;
     }
-    handleSubmit(e);
+    sendMessage({
+      role: "user" as const,
+      content: input,
+    });
+    setInput("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
