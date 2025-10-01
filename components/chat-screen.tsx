@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
+
 import type React from "react";
 import { useState } from "react";
 import type { Mode, UserRole } from "./empathy-engine-app";
