@@ -1,6 +1,7 @@
 "use client";
 
-
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import type React from "react";
 import { useState } from "react";
 import type { Mode, UserRole } from "./empathy-engine-app";
@@ -147,9 +148,7 @@ const TranslationInterface = ({
             <textarea
               className="h-24 w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-blue-500"
               id="message-input"
-              onChange={(e) =>
-                handleInputChange({ target: { value: e.target.value } } as any)
-              }
+              onChange={handleInputChange}
               placeholder="What do you want to say? (e.g., 'We need to ship this feature faster')"
               value={input}
             />
@@ -326,27 +325,46 @@ export function ChatScreen({
   const [currentPersona, setCurrentPersona] = useState<string | null>(null);
   const [fromRole, setFromRole] = useState<string>(userRole || "pm");
   const [toRole, setToRole] = useState<string>("engineering");
+  const [input, setInput] = useState("");
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
+  const { messages, sendMessage, status } = useChat({
+    id,
+    transport: new DefaultChatTransport({
       api: "/api/chat",
-      id,
-      body: {
-        mode: selectedMode?.id,
-        userRole,
-        persona: currentPersona,
-        fromRole,
-        toRole,
-        model: initialChatModel,
+      prepareSendMessagesRequest(request) {
+        return {
+          body: {
+            ...request.body,
+            mode: selectedMode?.id,
+            userRole,
+            persona: currentPersona,
+            fromRole,
+            toRole,
+            model: initialChatModel,
+          },
+        };
       },
-    });
+    }),
+  });
+
+  const isLoading = status === "submitted";
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setInput(e.target.value);
+  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) {
       return;
     }
-    handleSubmit(e);
+    sendMessage({
+      role: "user" as const,
+      parts: [{ type: "text", text: input }],
+    });
+    setInput("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
